@@ -1,10 +1,14 @@
 from rest_framework import serializers
-from .models import Supplier, Product,  Customer, Sale,Bill, Bank,ProductStock
+from .models import Supplier,SaleItem, Product,  Customer,Bill, Bank,ProductStock
 
 class SupplierSerializer(serializers.ModelSerializer):
     class Meta:
         model = Supplier
         fields = ['id', 'name']
+class SupplierAddSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Supplier
+        fields ='__all__'
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,7 +30,17 @@ class ProductStockViewSerializer(serializers.ModelSerializer):
 class ProductStockSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductStock
-        fields = ['product', 'supplier', 'quantity', 'supplier_price_per_unit', 'date_purchased']
+        fields = '__all__'
+
+
+
+class ProductStockSearchSerializer(serializers.ModelSerializer):
+    product = ProductSerializer()
+    supplier = SupplierSerializer()
+
+    class Meta:
+        model = ProductStock
+        fields = ['id', 'product', 'supplier', 'quantity', 'supplier_price_per_unit', 'date_purchased']
 
 # class ProductStockSerializer(serializers.ModelSerializer):
 #     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
@@ -55,22 +69,26 @@ class CustomerSerializer(serializers.ModelSerializer):
         model = Customer
         fields = ['phone_number', 'name']
 
-
-class SaleSerializer(serializers.ModelSerializer):
+#=========================billing===============
+class SaleItemSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Sale
-        fields = ['product', 'quantity', 'selling_price_per_unit']
-
+        model = SaleItem
+        fields = '__all__'
 class BillSerializer(serializers.ModelSerializer):
-    sales = SaleSerializer(many=True)
+    items = SaleItemSerializer(many=True)
 
     class Meta:
         model = Bill
-        fields = ['customer', 'total_amount', 'sales']
+        fields = '__all__'
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+        bill = Bill.objects.create(**validated_data)
+        for item_data in items_data:
+            SaleItem.objects.create(bill=bill, **item_data)
+        return bill
 
 
-
-
+#=========================billing end===============
 
 class BankSerializer(serializers.ModelSerializer):
     class Meta:

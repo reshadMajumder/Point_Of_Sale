@@ -31,30 +31,6 @@ class Product(models.Model):
 
 
 class ProductStock(models.Model):
-    # PAYMENT_METHOD_CHOICES = [
-    #     ('CASH', 'Cash'),
-    #     ('BANK', 'Bank'),
-    # ]
-
-    # PAYMENT_STATUS_CHOICES = [
-    #     ('PAID', 'Paid'),
-    #     ('PARTIAL', 'Partial Paid'),
-    #     ('DUE', 'Due'),
-    # ]
-
-    # supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
-    # product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    # purchase_date = models.DateField()
-    # quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    # buying_price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
-    # selling_price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
-    # total_paid_to_supplier = models.DecimalField(max_digits=10, decimal_places=2)
-    # payment_method = models.CharField(max_length=4, choices=PAYMENT_METHOD_CHOICES)
-    # payment_status = models.CharField(max_length=7, choices=PAYMENT_STATUS_CHOICES)
-
-    # def __str__(self):
-    #     return f"{self.product.name} from {self.supplier.name}"
-
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     quantity = models.IntegerField()
@@ -64,46 +40,38 @@ class ProductStock(models.Model):
     def __str__(self):
         return f'{self.product.name} from {self.supplier.name} on {self.date_purchased}'
 
-
-
-
-
-    
+   
 
 class Customer(BasePeople):
     def __str__(self):
         return self.name
 
-
-
-
-
+#------------------bill---------------- 
 
 class Bill(models.Model):
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE,null=True)
-    date = models.DateTimeField(auto_now_add=True ,null=True)
+    customer_phone = models.CharField(max_length=20,null=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2,null=True)
+    created_at = models.DateTimeField(auto_now_add=True,null=True)
 
     def __str__(self):
-        return f'Bill {self.id} - {self.customer.phone_number}'
+        return f"Bill #{self.id} - {self.customer_phone}"
 
-
-
-class Sale(models.Model):
-    bill = models.ForeignKey(Bill, related_name='sales', on_delete=models.CASCADE,null=True)
+class SaleItem(models.Model):
+    bill = models.ForeignKey(Bill, related_name='items', on_delete=models.CASCADE,null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE,null=True)
     quantity = models.IntegerField(null=True)
     selling_price_per_unit = models.DecimalField(max_digits=10, decimal_places=2,null=True)
 
     def __str__(self):
-        return f'Sale of {self.product.name} in {self.bill.id}'
-        
+        return f"{self.product.name} x {self.quantity}"
+#------------------bill end----------------      
 
 
 
 
 
 
+#unused
 
 class Bank(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
