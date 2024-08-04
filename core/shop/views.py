@@ -3,7 +3,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Supplier, Product, Customer, Bank,ProductStock
+from .models import Supplier,Bill, Product, Customer, Bank,ProductStock
 from .serializers import ProductStockSearchSerializer, SupplierSerializer,SupplierAddSerializer,ProductStockViewSerializer, BillSerializer,ProductSerializer, CustomerSerializer, BankSerializer,ProductStockSerializer
 from django.db.models import Q
 from django.db import transaction
@@ -144,8 +144,17 @@ def create_bill(request):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    
+@api_view (['GET'])
+def bill_list(request):
+    if request.method == 'GET':
+        bills = Bill.objects.all()
+        serializer = BillSerializer(bills, many=True)
+        return Response(serializer.data)
 
-#========================billing sectionend=========
+#========================billing section end=========
 
 
 

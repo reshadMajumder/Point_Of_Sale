@@ -16,6 +16,15 @@ class BasePeople(models.Model):
 class Supplier(BasePeople):
     def __str__(self):
         return self.name
+    
+
+    
+class Customer(BasePeople):
+    def __str__(self):
+        return self.name
+    
+
+
 
 class Product(models.Model):
     name = models.CharField(max_length=100)
@@ -25,10 +34,6 @@ class Product(models.Model):
     def __str__(self):
         return self.name
     
-
-
-
-
 
 class ProductStock(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -40,21 +45,22 @@ class ProductStock(models.Model):
     def __str__(self):
         return f'{self.product.name} from {self.supplier.name} on {self.date_purchased}'
 
-   
-
-class Customer(BasePeople):
-    def __str__(self):
-        return self.name
 
 #------------------bill---------------- 
 
 class Bill(models.Model):
-    customer_phone = models.CharField(max_length=20,null=True)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2,null=True)
-    created_at = models.DateTimeField(auto_now_add=True,null=True)
+    customer_phone = models.CharField(max_length=20, null=True)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    vat_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    discount = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    total_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    total_profit_or_loss = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    created_at = models.DateField(null=True)
 
     def __str__(self):
         return f"Bill #{self.id} - {self.customer_phone}"
+
+
 
 class SaleItem(models.Model):
     bill = models.ForeignKey(Bill, related_name='items', on_delete=models.CASCADE,null=True)
