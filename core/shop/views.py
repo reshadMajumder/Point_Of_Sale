@@ -23,8 +23,6 @@ def supplier_list_create(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
-# this one adds a new product and views all products
-
 
 
 #=============stock ===================
@@ -54,25 +52,29 @@ def product_stock_list(request):
         return Response(serializer.data)
     
     elif request.method == 'POST':
-        serializer = ProductStockSerializer(data=request.data)
+        if isinstance(request.data, list):
+            serializer = ProductStockSerializer(data=request.data, many=True)
+        else:
+            serializer = ProductStockSerializer(data=request.data)
+        
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
-    
 
 
 #search for adding in table for sale
-# @api_view(['GET'])
-# def search_products(request):
-#     query = request.GET.get('query', '')
-#     if query:
-#         products = Product.objects.filter(Q(name__icontains=query) | Q(unit__icontains=query))
-#         serializer = ProductSerializer(products, many=True)
-#         return Response(serializer.data)
-#     return Response([])
+@api_view(['GET'])
+def search_products(request):
+    query = request.query_params.get('search', '')
+    if query:
+        products = Product.objects.filter(name__icontains=query)
+    else:
+        products = Product.objects.none()
+    serializer = ProductSerializer(products, many=True)
+    return Response(serializer.data)
 
-
+#search products from the stock available. ignores 0 qty products
 @api_view(['GET'])
 def search_product_stock(request):
     query = request.GET.get('query', '')
@@ -101,7 +103,7 @@ def search_product_stock(request):
 
 
 #========================billing section=========
-
+#handels the pos billing funtcionality ony post
 @api_view(['POST'])
 def create_bill(request):
     serializer = BillSerializer(data=request.data)
@@ -146,7 +148,7 @@ def create_bill(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     
-    
+#view all the bills
 @api_view (['GET'])
 def bill_list(request):
     if request.method == 'GET':
@@ -187,26 +189,6 @@ def bill_list(request):
 #     serializer = ProductSerializer(products, many=True)
 #     return Response(serializer.data)
 
-# @api_view(['GET', 'POST'])
-# def product_stock_list(request):
-#     if request.method == 'GET':
-#         product_stocks = ProductStock.objects.all()
-#         serializer = ProductStockSerializer(product_stocks, many=True)
-#         return Response(serializer.data)
-    
-#     elif request.method == 'POST':
-#         serializer = ProductStockSerializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-
-
-
 
 #create customers and get customers
 @api_view(['GET', 'POST'])
@@ -222,21 +204,9 @@ def customer_list_create(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET', 'POST'])
-def sale_list_create(request):
-    if request.method == 'GET':
-        sales = Sale.objects.all()
-        serializer = SaleSerializer(sales, many=True)
-        return Response(serializer.data)
-    elif request.method == 'POST':
-        serializer = SaleSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
+#view add update delete all the bank
 @api_view(['GET', 'POST'])
 def bank_list_create(request):
     if request.method == 'GET':
@@ -249,3 +219,4 @@ def bank_list_create(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

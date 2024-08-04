@@ -42,27 +42,7 @@ class ProductStockSearchSerializer(serializers.ModelSerializer):
         model = ProductStock
         fields = ['id', 'product', 'supplier', 'quantity', 'supplier_price_per_unit', 'date_purchased']
 
-# class ProductStockSerializer(serializers.ModelSerializer):
-#     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
-#     product_name = serializers.CharField(source='product.name', read_only=True)
-#     class Meta:
-#         model = ProductStock
-#         fields = [
-#             'id', 'supplier', 'supplier_name', 'product', 'product_name', 
-#             'purchase_date', 'quantity', 'buying_price_per_unit', 'selling_price_per_unit', 
-#             'total_paid_to_supplier', 'payment_method', 'payment_status'
-#         ]
 
-
-
-
-
-
-
-# class SupplierProductSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = SupplierProduct
-#         fields = '__all__'
 
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -94,3 +74,36 @@ class BankSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bank
         fields = '__all__'
+
+
+
+
+
+
+
+
+
+
+
+
+# class ProductStockSerializer(serializers.ModelSerializer):
+#     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
+#     product_name = serializers.CharField(source='product.name', read_only=True)
+#     class Meta:
+#         model = ProductStock
+#         fields = [
+#             'id', 'supplier', 'supplier_name', 'product', 'product_name', 
+#             'purchase_date', 'quantity', 'buying_price_per_unit', 'selling_price_per_unit', 
+#             'total_paid_to_supplier', 'payment_method', 'payment_status'
+#         ]
+
+
+
+
+
+
+
+# class SupplierProductSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = SupplierProduct
+#         fields = '__all__'

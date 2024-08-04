@@ -12,12 +12,10 @@ class BasePeople(models.Model):
     class Meta:
         abstract = True
 
-
 class Supplier(BasePeople):
     def __str__(self):
         return self.name
     
-
     
 class Customer(BasePeople):
     def __str__(self):
@@ -41,6 +39,10 @@ class ProductStock(models.Model):
     quantity = models.IntegerField()
     supplier_price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
     date_purchased = models.DateField()
+    # amount_to_pay=models.DecimalField(max_digits=10, decimal_places=2,null=True)
+    # total_paid=models.DecimalField(max_digits=10, decimal_places=2,null=True)
+    # total_due=models.DecimalField(max_digits=10, decimal_places=2,null=True)
+    # updated_at = models.DateField(auto_now=True)
 
     def __str__(self):
         return f'{self.product.name} from {self.supplier.name} on {self.date_purchased}'
@@ -56,6 +58,9 @@ class Bill(models.Model):
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     total_profit_or_loss = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     created_at = models.DateField(null=True)
+    total_paid=models.DecimalField(max_digits=10, decimal_places=2,null=True)
+    total_due=models.DecimalField(max_digits=10, decimal_places=2,null=True)
+    updated_at = models.DateField(auto_now=True)
 
     def __str__(self):
         return f"Bill #{self.id} - {self.customer_phone}"
