@@ -57,6 +57,7 @@ class SaleItemSerializer(serializers.ModelSerializer):
 class BillSerializer(serializers.ModelSerializer):
     items = SaleItemSerializer(many=True)
 
+
     class Meta:
         model = Bill
         fields = '__all__'

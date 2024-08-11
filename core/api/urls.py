@@ -15,6 +15,8 @@ urlpatterns = [
     path('search-products/', search_products, name='search_products'),
     path('bills/', create_bill, name='create_bill'),
     path('bills-recipt/', bill_list, name='bills_recipt'),
+    path('banks/', bank_list_create, name='bank_list_create'),
+
 
 ]
 
@@ -24,6 +26,5 @@ urlpatterns = [
     # # path('supplier-products/', supplier_product_list_create, name='supplier_product_list_create'),
     # path('customers/', customer_list_create, name='customer_list_create'),
     # path('sales/', sale_list_create, name='sale_list_create'),
-    # path('banks/', bank_list_create, name='bank_list_create'),
       # path('product-stock/', product_stock_list, name='product-stock-list'),
     # path('sales/', sale_list),

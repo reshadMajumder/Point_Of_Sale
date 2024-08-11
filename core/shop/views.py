@@ -82,8 +82,7 @@ def search_product_stock(request):
         stocks = ProductStock.objects.filter(
             quantity__gt=0
         ).filter(
-            Q(product__name__icontains=query) |
-            Q(supplier__name__icontains=query)
+            Q(product__name__icontains=query) 
         )
     else:
         stocks = ProductStock.objects.filter(quantity__gt=0)
@@ -141,6 +140,13 @@ def create_bill(request):
                                 product_stock.quantity = 0
                                 product_stock.save()
 
+                # Update the bank balance
+
+                bank = Bank.objects.get(id=bill.payment_method)
+                if bank:
+                    bank.balance += bill.total_paid
+                    bank.save()
+                
         except ProductStock.DoesNotExist:
             return Response({'error': 'ProductStock entry not found'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -206,17 +212,43 @@ def customer_list_create(request):
 
 
 
+
+
 #view add update delete all the bank
-@api_view(['GET', 'POST'])
-def bank_list_create(request):
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+def bank_list_create(request, pk=None):
     if request.method == 'GET':
-        banks = Bank.objects.all()
-        serializer = BankSerializer(banks, many=True)
-        return Response(serializer.data)
+        if pk:
+            try:
+                bank = Bank.objects.get(pk=pk)
+                serializer = BankSerializer(bank)
+                return Response(serializer.data)
+            except Bank.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            banks = Bank.objects.all()
+            serializer = BankSerializer(banks, many=True)
+            return Response(serializer.data)
     elif request.method == 'POST':
         serializer = BankSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    elif request.method == 'PUT':
+        try:
+            bank = Bank.objects.get(pk=pk)
+        except Bank.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = BankSerializer(bank, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'DELETE':
+        try:
+            bank = Bank.objects.get(pk=pk)
+        except Bank.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        bank.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

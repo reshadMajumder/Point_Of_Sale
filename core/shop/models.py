@@ -57,13 +57,23 @@ class Bill(models.Model):
     discount = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     total_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     total_profit_or_loss = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    total_Bill = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     created_at = models.DateField(null=True)
     total_paid=models.DecimalField(max_digits=10, decimal_places=2,null=True)
     total_due=models.DecimalField(max_digits=10, decimal_places=2,null=True)
+    payment_method = models.CharField(max_length=50, null=True)
     updated_at = models.DateField(auto_now=True)
 
     def __str__(self):
         return f"Bill #{self.id} - {self.customer_phone}"
+
+
+class Bank(models.Model):
+    name = models.CharField(max_length=100)
+    account_number = models.CharField(max_length=20)
+    balance = models.DecimalField(max_digits=10, decimal_places=2)
+    def __str__(self):
+        return self.name
 
 
 
@@ -84,10 +94,3 @@ class SaleItem(models.Model):
 
 #unused
 
-class Bank(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
-    account_number = models.CharField(max_length=20)
-    balance = models.DecimalField(max_digits=10, decimal_places=2)
-    def __str__(self):
-        return self.name
