@@ -32,17 +32,29 @@ class Product(models.Model):
     def __str__(self):
         return self.name
     
+#------------Stock Bill Start-----------------
+class StockBill(models.Model):
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    total_paid = models.DecimalField(max_digits=10, decimal_places=2)
+    total_due = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=50)
+    discount = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+
+    updated_at = models.DateField(auto_now=True)
+    created_at = models.DateField()
+
+    def __str__(self):
+        return f"Stock Bill #{self.id}"
+#------------Stock Bill End-----------------
+
 
 class ProductStock(models.Model):
+    stock_bill = models.ForeignKey(StockBill, related_name='items', on_delete=models.CASCADE,null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     quantity = models.IntegerField()
     supplier_price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
     date_purchased = models.DateField()
-    # amount_to_pay=models.DecimalField(max_digits=10, decimal_places=2,null=True)
-    # total_paid=models.DecimalField(max_digits=10, decimal_places=2,null=True)
-    # total_due=models.DecimalField(max_digits=10, decimal_places=2,null=True)
-    # updated_at = models.DateField(auto_now=True)
 
     def __str__(self):
         return f'{self.product.name} from {self.supplier.name} on {self.date_purchased}'
@@ -89,8 +101,8 @@ class SaleItem(models.Model):
 
 
 
+class Unit(models.Model):
+    name = models.CharField(max_length=5)
 
-
-
-#unused
-
+    def __str__(self):
+        return self.name

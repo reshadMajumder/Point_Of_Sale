@@ -1,6 +1,6 @@
 from django.urls import path
 from authentication.views import login_view,logout_view
-from shop.views import bill_list,create_bill,search_products,product_list,search_product_stock, supplier_list_create, bank_list_create,product_stock_list
+from shop.views import bill_list,create_bill,search_products,product_list,search_product_stock, supplier_list_create, bank_list_create,product_stock_list,add_or_list_stock,unit_list_create
 
 urlpatterns = [
     path('login/', login_view, name='login'),
@@ -16,6 +16,8 @@ urlpatterns = [
     path('bills/', create_bill, name='create_bill'),
     path('bills-recipt/', bill_list, name='bills_recipt'),
     path('banks/', bank_list_create, name='bank_list_create'),
+    path('stock-bill/', add_or_list_stock, name='stock_bill_list_create'),
+    path('units/', unit_list_create, name='unit_list_create'),
 
 
 ]

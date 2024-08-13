@@ -3,8 +3,8 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Supplier,Bill, Product, Customer, Bank,ProductStock
-from .serializers import ProductStockSearchSerializer, SupplierSerializer,SupplierAddSerializer,ProductStockViewSerializer, BillSerializer,ProductSerializer, CustomerSerializer, BankSerializer,ProductStockSerializer
+from .models import Supplier,Bill, Product, Customer, Bank,ProductStock,StockBill,Unit
+from .serializers import ProductStockSearchSerializer, StockBillSerializer,SupplierAddSerializer,ProductStockViewSerializer, BillSerializer,ProductSerializer, CustomerSerializer, BankSerializer,UnitSerializer
 from django.db.models import Q
 from django.db import transaction
 
@@ -43,26 +43,6 @@ def product_list(request):
 
 
 
-#add or view product stock quantity 
-@api_view(['GET', 'POST'])
-def product_stock_list(request):
-    if request.method == 'GET':
-        stocks = ProductStock.objects.filter(quantity__gt=0)
-        serializer = ProductStockViewSerializer(stocks, many=True)
-        return Response(serializer.data)
-    
-    elif request.method == 'POST':
-        if isinstance(request.data, list):
-            serializer = ProductStockSerializer(data=request.data, many=True)
-        else:
-            serializer = ProductStockSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)
-
-
 #search for adding in table for sale
 @api_view(['GET'])
 def search_products(request):
@@ -89,11 +69,6 @@ def search_product_stock(request):
     
     serializer = ProductStockSearchSerializer(stocks, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-
-
-
 
 
 #==============stock end=================
@@ -164,36 +139,45 @@ def bill_list(request):
 
 #========================billing section end=========
 
+#================== stock bill start==================================
+#view available product stock quantity 
+@api_view(['GET', 'POST'])
+def product_stock_list(request):
+    if request.method == 'GET':
+        stocks = ProductStock.objects.filter(quantity__gt=0)
+        serializer = ProductStockViewSerializer(stocks, many=True)
+        return Response(serializer.data)
+    
+    
+
+@api_view(['GET', 'POST'])
+def add_or_list_stock(request):
+    if request.method == 'POST':
+        serializer = StockBillSerializer(data=request.data)
+        if serializer.is_valid():
+            stock_bill = serializer.save()
+
+            # Optionally, update bank balance if payment is made via bank
+            if stock_bill.payment_method:
+                bank = Bank.objects.get(id=stock_bill.payment_method)
+                if bank:
+                    if bank.balance < stock_bill.total_paid:
+                        stock_bill.delete()  # Remove the created stock bill
+                        return Response({'error': 'Insufficient bank balance'}, status=status.HTTP_400_BAD_REQUEST)
+                    bank.balance -= stock_bill.total_paid
+                    bank.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'GET':
+        stock_bills = StockBill.objects.all()
+        serializer = StockBillSerializer(stock_bills, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 
-# @api_view(['GET', 'POST'])
-# def supplier_product_list_create(request):
-#     if request.method == 'GET':
-#         supplier_products = SupplierProduct.objects.all()
-#         serializer = SupplierProductSerializer(supplier_products, many=True)
-#         return Response(serializer.data)
-#     elif request.method == 'POST':
-#         serializer = SupplierProductSerializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-
-
-# @api_view(['GET'])
-# def product_search(request):
-#     query = request.query_params.get('q', None)
-#     if query:
-#         products = Product.objects.filter(name__icontains=query)
-#     else:
-#         products = Product.objects.all()
-#     serializer = ProductSerializer(products, many=True)
-#     return Response(serializer.data)
+#================== stock bill end==================================
 
 
 #create customers and get customers
@@ -251,4 +235,45 @@ def bank_list_create(request, pk=None):
         except Bank.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         bank.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+#view add update delete all the unit
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+def unit_list_create(request, pk=None):
+    if request.method == 'GET':
+        if pk:
+            try:
+                unit = Unit.objects.get(pk=pk)
+                serializer = UnitSerializer(unit)
+                return Response(serializer.data)
+            except Unit.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            units = Unit.objects.all()
+            serializer = UnitSerializer(units, many=True)
+            return Response(serializer.data)
+    elif request.method == 'POST':
+        serializer = UnitSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'PUT':
+        try:
+            unit = Unit.objects.get(pk=pk)
+        except Unit.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = UnitSerializer(unit, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'DELETE':
+        try:
+            unit = Unit.objects.get(pk=pk)
+        except Unit.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        unit.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
