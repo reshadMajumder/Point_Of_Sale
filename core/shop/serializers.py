@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Supplier,SaleItem, Product,  Customer,Bill, Bank,ProductStock,StockBill,Unit
+from .models import Supplier,SaleItem,Transaction, Product,Asset,  Customer,Bill, Bank,ProductStock,StockBill,Unit
 
 
 
@@ -108,3 +108,31 @@ class UnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Unit
         fields = '__all__'
+
+
+
+
+#=============assets ==============
+class AssetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Asset
+        fields = '__all__'
+class TransactionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Transaction
+        fields = '__all__'
+class ViewTransactionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        depth=2
+        model = Transaction
+        fields = '__all__'
+
+
+
+#==========liability update===============
+class LiabilityBillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bill
+        fields = ['id', 'total_paid', 'total_due']  # Only allow these fields to be updated

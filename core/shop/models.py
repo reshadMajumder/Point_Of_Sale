@@ -106,3 +106,41 @@ class Unit(models.Model):
 
     def __str__(self):
         return self.name
+
+#------------------unit----------------
+
+
+
+
+
+class Asset(models.Model):
+    name = models.CharField(max_length=255)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity=models.IntegerField(null=True)
+    purchase_date = models.DateTimeField()
+    bank = models.ForeignKey(Bank, on_delete=models.CASCADE)
+
+
+    def __str__(self):
+        return self.name
+
+
+class Transaction(models.Model):
+    TRANSACTION_TYPES = [
+        ('ADD', 'Add Money'),
+        ('WITHDRAW', 'Withdraw Money'),
+        ('EXPENSE', 'Expense'),
+        ('SALARY', 'Salary'),
+        ('BILLS', 'Other Bills'),
+    ]
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)    
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    note=models.TextField()
+    date=models.DateTimeField()
+    bank = models.ForeignKey(Bank, on_delete=models.CASCADE)
+    def __str__(self):
+        return f"{self.transaction_type} - {self.note}"
+
+    
+
+

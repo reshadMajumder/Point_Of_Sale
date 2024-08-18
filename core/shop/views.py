@@ -3,10 +3,12 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Supplier,Bill, Product, Customer, Bank,ProductStock,StockBill,Unit
-from .serializers import ProductStockSearchSerializer, StockBillSerializer,SupplierAddSerializer,ProductStockViewSerializer, BillSerializer,ProductSerializer, CustomerSerializer, BankSerializer,UnitSerializer
-from django.db.models import Q
+from .models import Asset,Supplier,Bill, Product, Customer, Bank,ProductStock,StockBill,Unit,Transaction
+from .serializers import AssetSerializer,TransactionSerializer,ProductStockSearchSerializer, StockBillSerializer,SupplierAddSerializer,ProductStockViewSerializer, BillSerializer,ProductSerializer, CustomerSerializer, BankSerializer,UnitSerializer,ViewTransactionSerializer,LiabilityBillSerializer
+from django.db.models import Q,Sum,F,DecimalField
 from django.db import transaction
+from django.utils import timezone
+from datetime import timedelta
 
 # this one adds a new supplier and views allsupplier
 @api_view(['GET', 'POST'])
@@ -277,3 +279,204 @@ def unit_list_create(request, pk=None):
             return Response(status=status.HTTP_404_NOT_FOUND)
         unit.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+@api_view(['GET'])
+def dashboard_summary(request):
+    today = timezone.now().date()
+
+    # Total sold amount for today
+    total_sold_today = Bill.objects.filter(
+        created_at__day=today.day,
+        created_at__month=today.month,
+        created_at__year=today.year
+    ).aggregate(total=Sum('total_amount'))['total'] or 0
+
+    # Total sold amount for this month
+    total_sold_month = Bill.objects.filter(
+        created_at__month=today.month,
+        created_at__year=today.year
+    ).aggregate(total=Sum('total_amount'))['total'] or 0
+
+    # Total sold amount for this year
+    total_sold_year = Bill.objects.filter(
+        created_at__year=today.year
+    ).aggregate(total=Sum('total_amount'))['total'] or 0
+
+    # Total sold amount overall
+    total_sold_total = Bill.objects.aggregate(total=Sum('total_amount'))['total'] or 0
+
+    # Total profit for today
+    total_profit_today = Bill.objects.filter(
+        created_at__day=today.day,
+        created_at__month=today.month,
+        created_at__year=today.year
+    ).aggregate(profit=Sum(F('total_amount') - F('total_cost')))['profit'] or 0
+
+    # Total profit for this month
+    total_profit_month = Bill.objects.filter(
+        created_at__month=today.month,
+        created_at__year=today.year
+    ).aggregate(profit=Sum(F('total_amount') - F('total_cost')))['profit'] or 0
+
+    # Total profit for this year
+    total_profit_year = Bill.objects.filter(
+        created_at__year=today.year
+    ).aggregate(profit=Sum(F('total_amount') - F('total_cost')))['profit'] or 0
+
+    # Total profit overall
+    total_profit_total = Bill.objects.aggregate(profit=Sum(F('total_amount') - F('total_cost')))['profit'] or 0
+
+    # Total stock amount
+    total_stock_amount = ProductStock.objects.aggregate(stock_value=Sum(F('quantity') * F('supplier_price_per_unit')))['stock_value'] or 0
+    data={
+        'total_sold_today': total_sold_today,
+        'total_sold_month': total_sold_month,
+        'total_sold_year': total_sold_year,
+        'total_sold_total': total_sold_total,
+        'total_profit_today': total_profit_today,
+        'total_profit_month': total_profit_month,
+        'total_profit_year': total_profit_year,
+        'total_profit_total': total_profit_total,
+        'total_stock_amount': total_stock_amount,
+    }
+    return Response(data)
+
+
+#add view edit assets
+
+@api_view(['GET'])
+def view_assets(request):
+    assets = Asset.objects.all()
+    serializer = AssetSerializer(assets, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+# Add Asset
+@api_view(['POST'])
+def add_asset(request):
+    serializer = AssetSerializer(data=request.data)
+    if serializer.is_valid():
+        # Retrieve the selected bank instance
+        bank = Bank.objects.get(id=request.data['bank'])
+        
+        # Check if the bank has enough balance
+        if bank.balance < serializer.validated_data['amount']:
+            return Response({'error': 'Insufficient balance in the selected bank.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Save the asset since the bank has enough balance
+        asset = serializer.save()
+
+        # Deduct the asset amount from the bank's balance
+        bank.balance -= asset.amount
+        bank.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# Update Asset
+@api_view(['PUT'])
+def update_asset(request, pk):
+    #need to roll back previous money then update
+    try:
+        asset = Asset.objects.get(pk=pk)
+    except Asset.DoesNotExist:
+        return Response({'error': 'Asset not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = AssetSerializer(asset, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# Delete Asset
+@api_view(['DELETE'])
+def delete_asset(request, pk):
+    try:
+        asset = Asset.objects.get(pk=pk)
+    except Asset.DoesNotExist:
+        return Response({'error': 'Asset not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    asset.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+
+@api_view(['POST','GET'])
+def add_transaction(request):
+    if request.method=="POST":
+        serializer = TransactionSerializer(data=request.data)
+        if serializer.is_valid():
+            transaction_type = serializer.validated_data['transaction_type']
+            amount = serializer.validated_data['amount']
+            bank = serializer.validated_data['bank']
+
+            # Update bank balance based on transaction type
+            if transaction_type == 'ADD':
+                bank.balance += amount
+            else:
+                if bank.balance >= amount:
+                    bank.balance -= amount
+                else:
+                    return Response(
+                        {"error": "Insufficient funds in the selected bank."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            bank.save()
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method=="GET":
+        transaction=Transaction.objects.all()
+        serializer = ViewTransactionSerializer(transaction, many=True)
+        return Response(serializer.data)
+    
+@api_view(['DELETE'])
+def delete_transaction(request, pk):
+    try:
+        transaction = Transaction.objects.get(pk=pk)
+        bank = transaction.bank  # Get the associated bank
+        
+        # Roll back the bank's balance based on the transaction type
+        if transaction.transaction_type == 'ADD':
+            bank.balance -= transaction.amount
+        else:
+            bank.balance += transaction.amount
+        
+        bank.save()  # Save the updated bank balance
+        transaction.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except Transaction.DoesNotExist:
+        return Response({'error': 'Transaction not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
+
+#==================Liabilities====================
+@api_view(['PATCH','GET'])
+def update_liability(request, pk):
+    if request.method=="PATCH":
+        try:
+            liability = Bill.objects.get(pk=pk)
+            serializer = LiabilityBillSerializer(liability, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Bill.DoesNotExist:
+            return Response({'error': 'Liability not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+@api_view(['PATCH','GET'])
+def view_liability(request):
+
+    if request.method=="GET": 
+        liabilities = Bill.objects.filter(total_due__gt=0)
+        serializer = BillSerializer(liabilities, many=True)
+        return Response(serializer.data)
+
+
+
+

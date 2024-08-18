@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Supplier, Product, Customer,Bill, SaleItem, ProductStock,Bank,StockBill,Unit
+from .models import Supplier,Asset, Product, Customer,Bill, SaleItem, ProductStock,Bank,StockBill,Unit,Transaction
 
 # Register your models here.
 
@@ -12,3 +12,5 @@ admin.site.register(Bill)
 admin.site.register(Bank)
 admin.site.register(StockBill)
 admin.site.register(Unit)
+admin.site.register(Asset)
+admin.site.register(Transaction)
