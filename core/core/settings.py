@@ -25,11 +25,12 @@ SECRET_KEY = 'django-insecure-laz)fxh(29s29pfu5$yr85&mnuazk02osf(z4o8wdo6erhej#=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 CORS_ALLOWED_ORIGINS = (
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+    'https://pos-frontend-kohl.vercel.app/',
 )
 CORS_ALLOWED_CREDENTIALS=True
 # Application definition
