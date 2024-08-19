@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import Supplier,SaleItem, Product,  Customer,Bill, Bank,ProductStock
+from .models import Supplier,SaleItem,Transaction, Product,Asset,  Customer,Bill, Bank,ProductStock,StockBill,Unit
+
+
 
 class SupplierSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,7 +14,6 @@ class SupplierAddSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
-
         model = Product
         fields = '__all__'
 
@@ -33,6 +34,7 @@ class ProductStockSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+        
 
 class ProductStockSearchSerializer(serializers.ModelSerializer):
     product = ProductSerializer()
@@ -42,34 +44,13 @@ class ProductStockSearchSerializer(serializers.ModelSerializer):
         model = ProductStock
         fields = ['id', 'product', 'supplier', 'quantity', 'supplier_price_per_unit', 'date_purchased']
 
-# class ProductStockSerializer(serializers.ModelSerializer):
-#     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
-#     product_name = serializers.CharField(source='product.name', read_only=True)
-#     class Meta:
-#         model = ProductStock
-#         fields = [
-#             'id', 'supplier', 'supplier_name', 'product', 'product_name', 
-#             'purchase_date', 'quantity', 'buying_price_per_unit', 'selling_price_per_unit', 
-#             'total_paid_to_supplier', 'payment_method', 'payment_status'
-#         ]
-
-
-
-
-
-
-
-# class SupplierProductSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = SupplierProduct
-#         fields = '__all__'
 
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = ['phone_number', 'name']
 
-#=========================billing===============
+#=========================POS billing===============
 class SaleItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = SaleItem
@@ -87,10 +68,71 @@ class BillSerializer(serializers.ModelSerializer):
             SaleItem.objects.create(bill=bill, **item_data)
         return bill
 
-
-#=========================billing end===============
+#=========================POS billing end===============
 
 class BankSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bank
         fields = '__all__'
+
+
+
+#============stock bill ============
+
+
+
+
+class StockBillSerializer(serializers.ModelSerializer):
+    items = ProductStockSerializer(many=True)
+
+    class Meta:
+        model = StockBill
+        fields = '__all__'
+
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+        stock_bill = StockBill.objects.create(**validated_data)
+        for item_data in items_data:
+            # Remove 'stock_bill' from item_data if it exists
+            item_data.pop('stock_bill', None)
+            ProductStock.objects.create(stock_bill=stock_bill, **item_data)
+        return stock_bill
+
+
+
+
+#============stock bill end===========
+
+
+class UnitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Unit
+        fields = '__all__'
+
+
+
+
+#=============assets ==============
+class AssetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Asset
+        fields = '__all__'
+class TransactionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Transaction
+        fields = '__all__'
+class ViewTransactionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        depth=2
+        model = Transaction
+        fields = '__all__'
+
+
+
+#==========liability update===============
+class LiabilityBillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bill
+        fields = ['id', 'total_paid', 'total_due']  # Only allow these fields to be updated
