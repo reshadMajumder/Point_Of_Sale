@@ -2,3 +2,4 @@
 /frontend
 frontend/pos
 frontend/pos
+db.sqlite3
