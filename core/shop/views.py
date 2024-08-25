@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Asset,Supplier,Bill, Product, Customer, Bank,ProductStock,StockBill,Unit,Transaction
-from .serializers import AssetSerializer,TransactionSerializer,ProductStockSearchSerializer, StockBillSerializer,SupplierAddSerializer,ProductStockViewSerializer, BillSerializer,ProductSerializer, CustomerSerializer, BankSerializer,UnitSerializer,ViewTransactionSerializer,LiabilityBillSerializer
+from .serializers import AssetSerializer,BillUpdateSerializer,SearchBillSerializer,TransactionSerializer,ProductStockSearchSerializer, StockBillSerializer,SupplierAddSerializer,ProductStockViewSerializer, BillSerializer,ProductSerializer, CustomerSerializer, BankSerializer,UnitSerializer,ViewTransactionSerializer,LiabilityBillSerializer
 from django.db.models import Q,Sum,F,DecimalField
 from django.db import transaction
 from django.utils import timezone
@@ -480,3 +480,33 @@ def view_liability(request):
 
 
 
+#========================================update bill===============================
+@api_view(['PUT'])
+def update_bill(request, pk):
+    try:
+        bill = Bill.objects.get(pk=pk)
+    except Bill.DoesNotExist:
+        return Response({'error': 'Bill not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = BillUpdateSerializer(bill, data=request.data)
+    if serializer.is_valid():
+        bill = serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+#========================update bill end======================
+#========================search sell bill ======================
+
+@api_view(['GET'])
+def search_sell_bill(request):
+    query = request.query_params.get('query', '')
+
+    if query:
+        # Search by ID or customer_phone
+        bills = Bill.objects.filter(Q(id__icontains=query) | Q(customer_phone__icontains=query))
+    else:
+        bills = Bill.objects.none()
+
+    serializer = SearchBillSerializer(bills, many=True)
+    return Response(serializer.data)

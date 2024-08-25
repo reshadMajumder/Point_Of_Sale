@@ -1,6 +1,6 @@
 from django.urls import path
 from authentication.views import login_view,logout_view
-from shop.views import view_assets,add_asset,update_asset,delete_asset,add_transaction, bill_list,create_bill,search_products,product_list,search_product_stock, supplier_list_create, bank_list_create,product_stock_list,add_or_list_stock,unit_list_create,dashboard_summary,delete_transaction ,update_liability,view_liability
+from shop.views import view_assets,add_asset,search_sell_bill,update_asset,delete_asset,add_transaction,update_bill, bill_list,create_bill,search_products,product_list,search_product_stock, supplier_list_create, bank_list_create,product_stock_list,add_or_list_stock,unit_list_create,dashboard_summary,delete_transaction ,update_liability,view_liability
 
 urlpatterns = [
     path('login/', login_view, name='login'),
@@ -29,6 +29,15 @@ urlpatterns = [
     
     path('liability/<int:pk>/update/', update_liability, name='update_liability'),
     path('liability/', view_liability, name='update_liability'),
+
+
+
+    
+    path('bills/<int:pk>/update/', update_bill, name='update_bill'),
+    path('bills/search/', search_sell_bill, name='search_bills'),
+
+
+
 
 
 ]
